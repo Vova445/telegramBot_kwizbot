@@ -51,7 +51,7 @@ bot.on('message', async (msg) => {
           one_time_keyboard: true,
         },
       });
-    }, 1500); 
+    }, 1500);
   } else if (text === '/order') {
     bot.sendMessage(chatId, "Вкажіть номер вашого замовлення");
     sessions[chatId] = sessions[chatId] || {};
@@ -114,7 +114,7 @@ bot.on('message', async (msg) => {
           bot.sendMessage(chatId, `Дякуємо, ${user.firstName}! Ваше місто збережено.`);
           setTimeout(() => {
             showCompanyInfo(chatId);
-          }, 1500); 
+          }, 1500);
         } catch (error) {
           console.error('Error saving user:', error);
         }
@@ -125,28 +125,27 @@ bot.on('message', async (msg) => {
 
       if (!user && text) {
         const [firstName, ...lastName] = text.split(" ");
-        user = new User({ phone, firstName, lastName: lastName.join(" "), chatId, orderId: `order_${Date.now()}` });
-      
+        user = new User({ phone, firstName, lastName: lastName.join(" "), chatId });
+
         try {
           await user.save();
           bot.sendMessage(chatId, `Вітаємо, ${firstName}! Вкажіть ваше місто.`);
           sessions[chatId].awaitingCity = true;
         } catch (error) {
           console.error('Error saving user:', error);
-          bot.sendMessage(chatId, "Виникла помилка при збереженні користувача. Спробуйте пізніше.");
         }
       } else if (user) {
         bot.sendMessage(chatId, `Вітаємо, ${user.firstName}! Чим я можу допомогти?`);
         setTimeout(() => {
           showCompanyInfo(chatId);
         }, 1500);
-      }
-       else {
+      } else {
         bot.sendMessage(chatId, "Вам потрібно зареєструватися спочатку. Використовуйте команду /start для початку.");
       }
     }
   }
 });
+
 
 bot.on('contact', async (msg) => {
   const phone = msg.contact.phone_number;
