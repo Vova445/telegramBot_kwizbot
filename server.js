@@ -125,21 +125,23 @@ bot.on('message', async (msg) => {
 
       if (!user && text) {
         const [firstName, ...lastName] = text.split(" ");
-        user = new User({ phone, firstName, lastName: lastName.join(" "), chatId });
-
+        user = new User({ phone, firstName, lastName: lastName.join(" "), chatId, orderId: `order_${Date.now()}` });
+      
         try {
           await user.save();
           bot.sendMessage(chatId, `Вітаємо, ${firstName}! Вкажіть ваше місто.`);
           sessions[chatId].awaitingCity = true;
         } catch (error) {
           console.error('Error saving user:', error);
+          bot.sendMessage(chatId, "Виникла помилка при збереженні користувача. Спробуйте пізніше.");
         }
       } else if (user) {
         bot.sendMessage(chatId, `Вітаємо, ${user.firstName}! Чим я можу допомогти?`);
         setTimeout(() => {
           showCompanyInfo(chatId);
-        }, 1500); 
-      } else {
+        }, 1500);
+      }
+       else {
         bot.sendMessage(chatId, "Вам потрібно зареєструватися спочатку. Використовуйте команду /start для початку.");
       }
     }
@@ -158,14 +160,13 @@ bot.on('contact', async (msg) => {
   if (!user) {
     bot.sendMessage(chatId, "Вкажіть будь ласка ваше ім'я та прізвище");
     sessions[chatId] = { phone, chatId };
-  } else if (user) {
+  } else {
     bot.sendMessage(chatId, `Вітаємо, ${user.firstName}! Чим я можу допомогти?`);
     setTimeout(() => {
       showCompanyInfo(chatId);
     }, 1500);
-  } else {
-    bot.sendMessage(chatId, "Вам потрібно зареєструватися спочатку. Використовуйте команду /start для початку.");
   }
+
 });
 
 function showCompanyInfo(chatId) {
