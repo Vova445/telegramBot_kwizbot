@@ -21,7 +21,7 @@ const sessions = {};
 const commands = [
   { command: '/start', description: 'Розпочати' },
   { command: '/order', description: 'Перевірити статус замовлення' },
-  { command: '/operator', description: 'Зв\'язатися з оператором' },
+  { command: '/operator', description: "Зв'язатися з оператором" },
 ];
 
 bot.setMyCommands(commands)
@@ -51,7 +51,7 @@ bot.on('message', async (msg) => {
           one_time_keyboard: true,
         },
       });
-    }, 500);
+    }, 1500); 
   } else if (text === '/order') {
     bot.sendMessage(chatId, "Вкажіть номер вашого замовлення");
     sessions[chatId] = sessions[chatId] || {};
@@ -83,17 +83,23 @@ bot.on('message', async (msg) => {
       let user = await User.findOne({ chatId });
 
       if (user) {
-        const message = new Message({
-          phone: user.phone,
-          message: text,
-          orderId: text.orderId || null
-        });
-        try {
-          await message.save();
-          bot.sendMessage(chatId, "Ваше повідомлення надіслано оператору. Очікуйте відповіді.");
-          sessions[chatId].awaitingOperator = false;
-        } catch (error) {
-          console.error('Error saving message:', error);
+        const existingMessage = await Message.findOne({ phone: user.phone });
+        if (existingMessage) {
+          bot.sendMessage(chatId, "Повідомлення з таким номером телефону вже існує.");
+        } else {
+          const message = new Message({
+            phone: user.phone,
+            message: text,
+            orderId: ''
+          });
+          try {
+            await message.save();
+            bot.sendMessage(chatId, "Ваше повідомлення надіслано оператору. Очікуйте відповіді.");
+            sessions[chatId].awaitingOperator = false;
+          } catch (error) {
+            console.error('Error saving message:', error);
+            bot.sendMessage(chatId, "Виникла помилка при збереженні повідомлення. Спробуйте пізніше.");
+          }
         }
       } else {
         bot.sendMessage(chatId, "Вам потрібно зареєструватися спочатку. Використовуйте команду /start для початку.");
@@ -106,7 +112,9 @@ bot.on('message', async (msg) => {
         try {
           await user.save();
           bot.sendMessage(chatId, `Дякуємо, ${user.firstName}! Ваше місто збережено.`);
-          showCompanyInfo(chatId);
+          setTimeout(() => {
+            showCompanyInfo(chatId);
+          }, 1500); 
         } catch (error) {
           console.error('Error saving user:', error);
         }
@@ -115,7 +123,7 @@ bot.on('message', async (msg) => {
     } else if (phone) {
       let user = await User.findOne({ phone });
 
-      if (!user) {
+      if (!user && text) {
         const [firstName, ...lastName] = text.split(" ");
         user = new User({ phone, firstName, lastName: lastName.join(" "), chatId });
 
@@ -126,9 +134,13 @@ bot.on('message', async (msg) => {
         } catch (error) {
           console.error('Error saving user:', error);
         }
-      } else {
+      } else if (user) {
         bot.sendMessage(chatId, `Вітаємо, ${user.firstName}! Чим я можу допомогти?`);
-        showCompanyInfo(chatId);
+        setTimeout(() => {
+          showCompanyInfo(chatId);
+        }, 1500); 
+      } else {
+        bot.sendMessage(chatId, "Вам потрібно зареєструватися спочатку. Використовуйте команду /start для початку.");
       }
     }
   }
@@ -146,14 +158,24 @@ bot.on('contact', async (msg) => {
   if (!user) {
     bot.sendMessage(chatId, "Вкажіть будь ласка ваше ім'я та прізвище");
     sessions[chatId] = { phone, chatId };
-  } else {
+  } else if (user) {
     bot.sendMessage(chatId, `Вітаємо, ${user.firstName}! Чим я можу допомогти?`);
-    showCompanyInfo(chatId);
+    setTimeout(() => {
+      showCompanyInfo(chatId);
+    }, 1500);
+  } else {
+    bot.sendMessage(chatId, "Вам потрібно зареєструватися спочатку. Використовуйте команду /start для початку.");
   }
 });
 
 function showCompanyInfo(chatId) {
-  bot.sendMessage(chatId, "Інформація про компанію: поки відсутня");
-  bot.sendMessage(chatId, "/order - перевірити статус замовлення");
-  bot.sendMessage(chatId, "/operator - зв'язатися з оператором");
+  setTimeout(() => {
+    bot.sendMessage(chatId, "Інформація про компанію: поки відсутня");
+    setTimeout(() => {
+      bot.sendMessage(chatId, "/order - перевірити статус замовлення");
+      setTimeout(() => {
+        bot.sendMessage(chatId, "/operator - зв'язатися з оператором");
+      }, Math.random() * 1000 + 1000); 
+    }, Math.random() * 1000 + 1000);
+  }, Math.random() * 1000 + 1000);
 }
